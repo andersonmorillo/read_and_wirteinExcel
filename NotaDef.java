@@ -1,6 +1,5 @@
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
@@ -14,102 +13,38 @@ import java.util.stream.*;
 import java.io.*;
 import java.util.concurrent.TimeUnit;
 /*Estudiante Anderson Morillo Diaz*/
-/**
- * Created by rajeevkumarsingh on 18/12/17.
- */
 
 public class NotaDef {
 
     double quiz1,quiz2,quiz3,taller1,taller2;
     double nota1, nota2, nota3;
-    double acu1, acu2, acu3, def;
     String nombre;
     Scanner entrada = new Scanner(System.in);
-
-    Estudiante arr[];
-
     String reportes[];
-
-
-    public static final String SAMPLE_XLS_FILE_PATH = "./sample-xls-file.xls";
     public static final String SAMPLE_XLSX_FILE_PATH = "D:\\Anderson\\Downloads\\DATOS.xlsx";
     public static void main(String[] args) throws IOException, InvalidFormatException {
             NotaDef fc = new NotaDef();
             Estudiante arr[] = new Estudiante[0];
             String menu;
             Map <Integer, Estudiante> data= new HashMap<>();
-
-            /*
-            System.out.println("-------------------------------------MENU----------------------------------------- ");
-            System.out.println("Opciones:");
-            System.out.println("1. Introducir N numero de estudiantes (Digitar 1)");
-            System.out.println("2. Probar software con datos 10 Estudiantes (Digitar 2)");
-            System.out.println("3. Introducir cualquier digito diferente de 1 y 2 para (salir)");
-            menu= fc.entrada.next();
-            switch (menu){
-                case "1":
-                    fc.principal(0,arr);
-                    break;
-                case "2":
-                    fc.principal(10,arr);
-                    break;
-                default:
-            }
-*/
-
-        // Creating a Workbook from an Excel file (.xls or .xlsx)
         Workbook workbook = WorkbookFactory.create(new File(SAMPLE_XLSX_FILE_PATH));
-
-        // Retrieving the number of sheets in the Workbook
         System.out.println("Workbook has " + workbook.getNumberOfSheets() + " Sheets : ");
-
-        /*
-           =============================================================
-           Iterating over all the sheets in the workbook (Multiple ways)
-           =============================================================
-        */
-
-        // 2. Or you can use a for-each loop
         System.out.println("Retrieving Sheets using for-each loop");
         for(Sheet sheet: workbook) {
             System.out.println("=> " + sheet.getSheetName());
         }
-        /*
-           ==================================================================
-           Iterating over all the rows and columns in a Sheet (Multiple ways)
-           ==================================================================
-        */
         // Getting the Sheet at index zero
         Sheet sheet = workbook.getSheetAt(0);
         // Create a DataFormatter to format and get each cell's value as String
         DataFormatter dataFormatter = new DataFormatter();
         // 1. You can obtain a rowIterator and columnIterator and iterate over them
-        System.out.println("\n\nIterating over Rows and Columns using Iterator\n");
         Iterator<Row> rowIterator = sheet.rowIterator();
-        /*
-        while (rowIterator.hasNext()) {
-            Row row = rowIterator.next();
-
-            // Now let's iterate over the columns of the current row
-            Iterator<Cell> cellIterator = row.cellIterator();
-
-            while (cellIterator.hasNext()) {
-                Cell cell = cellIterator.next();
-                printCellValue(cell);
-                //String cellValue = dataFormatter.formatCellValue(cell);
-                //System.out.print(cellValue + "\t");
-            }
-            System.out.println();
-        }*/
         int numEstudiantes=sheet.getLastRowNum();
         arr= new Estudiante[numEstudiantes];
-        // 2. Or you can use a for-each loop to iterate over the rows and columns
         System.out.println("\n\nIterating over Rows and Columns using for-each loop\n");
         int countRow=0;
         for (Row row: sheet) {
             int countCell=0;
-            //arr[countRow]=new Estudiante()
-            //data.put(countRow, Estudiante);
             for(Cell cell: row) {
                 cell = getCellValue(cell,data,countRow,countCell);
                 switch (cell.getColumnIndex()){
@@ -168,11 +103,8 @@ public class NotaDef {
             }
             System.out.println(" ");
         }
-        // Closing the workbook
         fc.principal(arr.length,arr);
         //workbook.close();
-
-
     }
 
 
@@ -270,9 +202,9 @@ public class NotaDef {
         nota2=IntroducirNota("Quices");
         nota3=IntroducirNota("Talleres");
     }
+
     public double IntroducirNota(String nombreExamen){
         double nota=-1;
-
         do{
             System.out.print("Ingrese nota "+nombreExamen+":");
             String notaStr = entrada.next();
@@ -292,6 +224,7 @@ public class NotaDef {
         }while (nota > 5 || nota < 0);
         return nota;
     }
+
     private static boolean isNumeric(String cadena){
         try {
             double numero=Double.parseDouble(cadena);
@@ -300,6 +233,7 @@ public class NotaDef {
             return false;
         }
     }
+
     private static int isNumericInt(String cadena){
         try {
             int numero=Integer.parseInt(cadena);
@@ -308,6 +242,7 @@ public class NotaDef {
             return -1;
         }
     }
+
     public int Mensaje(int i,Estudiante arr[]) {
         /*El metodo imprime si los estudiantes aprobaron o reprobaron y devuelve 1 o 0 para contabilizar */
         System.out.println("\n");
@@ -327,6 +262,7 @@ public class NotaDef {
         }
         return 0;
     }
+
     public String estudianteConCinco(double nota, String nombre) {
         /*metodo para devolver el nombre del estudiante que obtuvo 5 en definitiva */
         if (nota == 5) {
@@ -334,6 +270,7 @@ public class NotaDef {
         }
         return null;
     }
+
     public void resultadoGeneral(int sumAprobados, int numEstudiantes, double sumDef, double desvicionEstandar) {
         System.out.println("------------------Resultados Generales----------------------------------------------");
         System.out.println("La cantidad de estudiantes que aprobaron:");
@@ -345,6 +282,7 @@ public class NotaDef {
         System.out.println("Desvicion estandar: ");
         System.out.println(desvicionEstandar + "\n");
     }
+
     public void notasMaximasMinimas(double minimaQuiz, double minimaTaller, double minimaParcial, double maximaTaller, double maximaQuiz, double maximaParcial) {
         System.out.println("-----------------------Notas Maximas y minimas----------------------------------------");
         System.out.println("Notas mas altas:");
@@ -356,6 +294,7 @@ public class NotaDef {
         System.out.println("quiz: " + minimaQuiz);
         System.out.println("taller: " + minimaTaller+"\n\n");
     }
+
     public static boolean isValidUsername(String name)
     {
         String regex = "^[A-Za-z]\\w{1,20}$";
@@ -366,8 +305,8 @@ public class NotaDef {
         Matcher m = p.matcher(name);
         return m.matches();
     }
-    public void principal(int numeroEstudiantes, Estudiante arr[]){
 
+    public void principal(int numeroEstudiantes, Estudiante arr[]){
         long inicio = System.nanoTime();
         long noCountTime=0;
         int numEstudiantes = numeroEstudiantes;
@@ -391,7 +330,6 @@ public class NotaDef {
               resultados(numeroEstudiantes,arr,true);
         }
     }
-
 
     public void  resultados(int numeroEstudiantes,Estudiante arr[], boolean excel){
         long inicio = System.nanoTime(),noCountTime=0;
@@ -443,7 +381,6 @@ public class NotaDef {
         System.out.println("\n");
         notasMaximasMinimas(minimaQuiz, minimaTaller, minimaParcial, maximaTaller, maximaQuiz, maximaParcial);
         Ordenar(arr, numEstudiantes);
-
         long fin = System.nanoTime();
         System.out.println("Duracion: " + ((fin-inicio)-noCountTime)/1e6 + " ms");
     }
@@ -481,7 +418,6 @@ public class NotaDef {
         for (int h = arr.length; h > 0; h--) {
             count+=1;
             System.out.println(count+". Nombre: " + arr[h-1].getNombre() + "   Nota: " + arr[h-1].getNota());
-
         }
         System.out.println("\n");
     }
@@ -500,7 +436,6 @@ class Estudiante{
         this.notaQuiz= (quiz1+quiz2+quiz3)/3;
         this.notaTaller =(taller1+taller2)/2;
         this.nota= (notaQuiz*0.3)+(notaParcial*0.5)+(notaTaller*0.2);
-
     }
     public double getNota(){
         return nota;
@@ -515,15 +450,9 @@ class Estudiante{
     public  void setNota(double note){
         this.nota= note;
     }
-
     public void setQuiz1(double quiz1){this.quiz1=quiz1;}
-
     public void setQuiz2(double quiz2){this.quiz2=quiz2;}
-
     public void setQuiz3(double quiz3){this.quiz3=quiz3;}
-
     public void setTaller1(double taller1){this.taller1=taller1;}
-
     public void setTaller2(double taller2){this.taller2=taller2;}
-
 }
