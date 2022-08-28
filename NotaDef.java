@@ -40,68 +40,73 @@ public class NotaDef {
         // 1. You can obtain a rowIterator and columnIterator and iterate over them
         Iterator<Row> rowIterator = sheet.rowIterator();
         int numEstudiantes=sheet.getLastRowNum();
+        numEstudiantes --;
         arr= new Estudiante[numEstudiantes];
         System.out.println("\n\nIterating over Rows and Columns using for-each loop\n");
         int countRow=0;
         for (Row row: sheet) {
-            int countCell=0;
-            for(Cell cell: row) {
-                cell = getCellValue(cell,data,countRow,countCell);
-                switch (cell.getColumnIndex()){
-                    case 1:
-                        try{
-                            fc.nombre = cell.getStringCellValue();
-                        }catch (Exception e){
-                            fc.nombre = "Sin nombre";
-                        }break;
-                    case 2:
-                        try{
-                            fc.nota1 = cell.getNumericCellValue();
-                        } catch (Exception e){
-                            fc.nota1 = 0;
-                        }break;
-                    case 3:
-                        try {
-                            fc.quiz1 = cell.getNumericCellValue();
-                        } catch (Exception e){
-                            fc.quiz1 =0;
-                        }break;
-                    case 4:
-                        try {
-                            fc.quiz2 = cell.getNumericCellValue();
-                        } catch (Exception e){
-                            fc.quiz2 =0;
-                        }break;
-                    case 5:
-                        try {
-                            fc.quiz3 = cell.getNumericCellValue();
-                        } catch (Exception e){
-                            fc.quiz3 =0;
-                        }break;
-                    case 6:
-                        try {
-                            fc.taller1 = cell.getNumericCellValue();
-                        } catch (Exception e) {
-                            fc.taller1 = 0;
-                        }break;
-                    case 7:
-                        try {
-                            fc.taller2 =cell.getNumericCellValue();
-                        } catch (Exception e){
-                            fc.taller2=0;
-                        }break;
-                    default:
-                        System.out.println(" ");
+            if (row.getRowNum()!=sheet.getFirstRowNum()){
+                int countCell=0;
+                for(Cell cell: row) {
+                    cell = getCellValue(cell,data,countRow,countCell);
+                    switch (cell.getColumnIndex()){
+                        case 1:
+                            try{
+                                fc.nombre = cell.getStringCellValue();
+                            }catch (Exception e){
+                                fc.nombre = "Sin nombre";
+                            }break;
+                        case 2:
+                            try{
+                                fc.nota1 = cell.getNumericCellValue();
+                            } catch (Exception e){
+                                fc.nota1 = 0;
+                            }break;
+                        case 3:
+                            try {
+                                fc.quiz1 = cell.getNumericCellValue();
+                            } catch (Exception e){
+                                fc.quiz1 =0;
+                            }break;
+                        case 4:
+                            try {
+                                fc.quiz2 = cell.getNumericCellValue();
+                            } catch (Exception e){
+                                fc.quiz2 =0;
+                            }break;
+                        case 5:
+                            try {
+                                fc.quiz3 = cell.getNumericCellValue();
+                            } catch (Exception e){
+                                fc.quiz3 =0;
+                            }break;
+                        case 6:
+                            try {
+                                fc.taller1 = cell.getNumericCellValue();
+                            } catch (Exception e) {
+                                fc.taller1 = 0;
+                            }break;
+                        case 7:
+                            try {
+                                fc.taller2 =cell.getNumericCellValue();
+                            } catch (Exception e){
+                                fc.taller2=0;
+                            }break;
+                        default:
+                            System.out.println(" ");
+                    }
                 }
             }
-            try{
-                arr[countRow] = new Estudiante(fc.nombre,fc.nota1, fc.quiz1, fc.quiz2, fc.quiz3, fc.taller1,fc.taller2);
-                //data.put(countRow,new Estudiante(fc.nombre,fc.nota1, fc.quiz1, fc.quiz2, fc.quiz3, fc.taller1,fc.taller2));
-                countRow++;
-            } catch (Exception e){
-                break;
+            if (row.getRowNum()!=sheet.getFirstRowNum()){
+                try{
+                    arr[countRow] = new Estudiante(fc.nombre,fc.nota1, fc.quiz1, fc.quiz2, fc.quiz3, fc.taller1,fc.taller2);
+                    //data.put(countRow,new Estudiante(fc.nombre,fc.nota1, fc.quiz1, fc.quiz2, fc.quiz3, fc.taller1,fc.taller2));
+                    countRow++;
+                } catch (Exception e){
+                    break;
+                }
+                System.out.println(" ");
             }
-            System.out.println(" ");
         }
         fc.principal(arr.length,arr);
         //workbook.close();
