@@ -1,5 +1,7 @@
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
@@ -18,7 +20,7 @@ public class NotaDef {
 
     double quiz1,quiz2,quiz3,taller1,taller2;
     double nota1, nota2, nota3;
-    String nombre;
+    String nombre,estado;
     Scanner entrada = new Scanner(System.in);
     String reportes[];
     public static final String SAMPLE_XLSX_FILE_PATH = "D:\\Anderson\\Downloads\\DATOS.xlsx";
@@ -40,15 +42,30 @@ public class NotaDef {
         // 1. You can obtain a rowIterator and columnIterator and iterate over them
         Iterator<Row> rowIterator = sheet.rowIterator();
         int numEstudiantes=sheet.getLastRowNum();
-        numEstudiantes --;
         arr= new Estudiante[numEstudiantes];
         System.out.println("\n\nIterating over Rows and Columns using for-each loop\n");
-        int countRow=0;
+        int countRow=0,countRow1=0;
+        Sheet sheet2 =workbook.createSheet("Reportes");
         for (Row row: sheet) {
             if (row.getRowNum()!=sheet.getFirstRowNum()){
                 int countCell=0;
                 for(Cell cell: row) {
-                    cell = getCellValue(cell,data,countRow,countCell);
+                    boolean respuesta = getCellValue(cell,countCell,sheet2,countRow,sheet);
+                    try{
+                        if (!respuesta){
+                            Row row1 = sheet2.createRow(countRow1++);
+                            Cell cell2 = row1.createCell(0);
+                            Cell name=row.getCell(1);
+                            try{
+                                cell2.setCellValue("Se cambio la nota en la fila "+cell.getAddress()+" del estudiante "+name.getNumericCellValue()+" debido a inconsistencia en el valor previamente establecido");//contador de notas
+                            }catch (Exception e){
+                                cell2.setCellValue("Se cambio la nota en la fila "+cell.getAddress()+" del estudiante "+name.getStringCellValue()+" debido a inconsistencia en el valor previamente establecido");
+                            }
+                        }
+                    }catch (Exception e){
+
+                    }
+
                     switch (cell.getColumnIndex()){
                         case 1:
                             try{
@@ -100,7 +117,6 @@ public class NotaDef {
             if (row.getRowNum()!=sheet.getFirstRowNum()){
                 try{
                     arr[countRow] = new Estudiante(fc.nombre,fc.nota1, fc.quiz1, fc.quiz2, fc.quiz3, fc.taller1,fc.taller2);
-                    //data.put(countRow,new Estudiante(fc.nombre,fc.nota1, fc.quiz1, fc.quiz2, fc.quiz3, fc.taller1,fc.taller2));
                     countRow++;
                 } catch (Exception e){
                     break;
@@ -108,73 +124,98 @@ public class NotaDef {
                 System.out.println(" ");
             }
         }
-        fc.principal(arr.length,arr);
-        //workbook.close();
+        int i=0;
+        int contadorFilas=0;
+        Cell cell1,cell2;
+        boolean condicion=true;
+        for (Row row: sheet){
+            if (row.getRowNum()==sheet.getLastRowNum()+1){condicion=false;}
+                if (row.getRowNum()!=0 && condicion){
+                    cell1=row.createCell(8);
+                    cell2=row.createCell(9);
+                    cell1=row.getCell(8);
+                    cell1.setCellValue(arr[contadorFilas].getNota());
+                    cell2=row.getCell(9);
+                    cell2.setCellValue(arr[contadorFilas].getEstado());
+                    i++;
+                    contadorFilas++;
+                }else {
+                    cell1=row.createCell(8);
+                    cell2=row.createCell(9);
+                    cell1.setCellValue("Promedio Nota");
+                    cell2.setCellValue("Estado");
+                }
+        }
+        Sheet sheet1=workbook.createSheet("Informe");
+        fc.principal(arr.length,arr,sheet1);//arreglar retornando la hoja de calculo
+        FileOutputStream out = new FileOutputStream(
+                "D:/Anderson/Downloads/DATOS1.xlsx");
+        workbook.write(out);
+        out.close();
     }
 
 
-        private static Cell getCellValue(Cell cell, Map <Integer, Estudiante> data,int conRow, int conCell) {
-        /*
-
-        * */
+        private static boolean getCellValue(Cell cell, int conCell,Sheet sheet2,int contador,Sheet sheet) {
         final double cero =0;
         double numero=0;
+        int countRow=contador;
+        Row row;
+        Cell cell1;
+        Row row1=sheet.getRow(contador);
+        Cell name=row1.getCell(1);
         switch (cell.getCellType()) {
             case BOOLEAN:
+            case FORMULA:
+                //row=sheet2.createRow(countRow);
+                //cell1=row.createCell(0);
+                //name=row1.getCell(1);
+                //cell1.setCellValue("Se cambio la nota en la fila "+cell.getRowIndex()+" nombre "+name.getStringCellValue()+" debido a inconsistencia en el valor previamente establecido");
                 cell.setCellValue(cero);
-                System.out.print(cell.getBooleanCellValue());
-
-                return cell;
+                return false;
             case STRING:
                 double res= numberValidation(cell.getStringCellValue());
                 if (conCell>=2) {
-                    cell.setCellValue(cero);//crear reporte
+                    cell.setCellValue(cero);
                 } else {
                     if (res!=-1){
                         cell.setCellValue(res);
-
                         System.out.println(cell.getNumericCellValue());
+                        return false;
                     } else {
                         String word = cell.getRichStringCellValue().getString();
-                        if (word.length() < 4) {//arreglar valores tipo string en las notas
+                        if (word.length() < 4) {
                             cell.setCellValue(cero);
                             System.out.print(cell.getNumericCellValue());
+                            return false;
                         } else {
                             System.out.print(cell.getStringCellValue());
-
-
+                            return true;
                         }
                     }
                 }
-
-                return cell;
             case NUMERIC:
                 if (DateUtil.isCellDateFormatted(cell)) {
                     cell.setCellValue(cero);
+                    return false;
                 } else {
                     numero=cell.getNumericCellValue();
                     if (numero>5 || numero<0) {
                         cell.setCellValue(cero);
+                        return false;
                     }else {
                         cell.setCellValue(numero);
+                        return true;
                     }
                 }
-                System.out.println(cell.getNumericCellValue());
-                return cell;
-            case FORMULA:
-                cell.setCellValue(cero);
-                System.out.print(cell.getCellFormula());
-                return cell;
             case BLANK:
                 cell.setCellValue(cero);
                 System.out.println(cell.getNumericCellValue());
-                //recordar hacer los reportes para los casos especiales
-                return  cell;
+                return  false;
             default:
                 System.out.print("print default\n ");
         }
         System.out.print("\t");
-        return null;
+        return true;
     }
 
     static double numberValidation(String prueba) {
@@ -276,28 +317,87 @@ public class NotaDef {
         return null;
     }
 
-    public void resultadoGeneral(int sumAprobados, int numEstudiantes, double sumDef, double desvicionEstandar) {
+    public int resultadoGeneral(int sumAprobados, int numEstudiantes, double sumDef, double desvicionEstandar, Sheet sheet1,int rowNun) {
+        int rowNum=rowNun;
+        Row row = sheet1.createRow(rowNum++);
+        Cell cell = row.createCell(0);
+        cell.setCellValue("Resultados Generales");
         System.out.println("------------------Resultados Generales----------------------------------------------");
+        row = sheet1.createRow(rowNum++);
+        cell = row.createCell(0);
+        cell.setCellValue("La cantidad de estudiantes que aprobaron:");
         System.out.println("La cantidad de estudiantes que aprobaron:");
+        row = sheet1.createRow(rowNum++);
+        cell = row.createCell(0);
+        cell.setCellValue(sumAprobados);
         System.out.println(sumAprobados);
+        row = sheet1.createRow(rowNum++);
+        cell = row.createCell(0);
+        cell.setCellValue("La cantidad de estudiantes que no aprobaron:");
         System.out.println("La cantidad de estudiantes que no aprobaron:");
+        row = sheet1.createRow(rowNum++);
+        cell = row.createCell(0);
+        cell.setCellValue(numEstudiantes - sumAprobados);
         System.out.println(numEstudiantes - sumAprobados);
+        row = sheet1.createRow(rowNum++);
+        cell = row.createCell(0);
+        cell.setCellValue("El promedio general de las notas definitivas:");
         System.out.println("El promedio general de las notas definitivas:");
+        row = sheet1.createRow(rowNum++);
+        cell = row.createCell(0);
+        cell.setCellValue(sumDef / numEstudiantes);
         System.out.println(sumDef / numEstudiantes);
+        row = sheet1.createRow(rowNum++);
+        cell = row.createCell(0);
+        cell.setCellValue("Desvicion estandar: ");
         System.out.println("Desvicion estandar: ");
+        row = sheet1.createRow(rowNum++);
+        cell = row.createCell(0);
+        cell.setCellValue(desvicionEstandar);
         System.out.println(desvicionEstandar + "\n");
+        return rowNum;
     }
 
-    public void notasMaximasMinimas(double minimaQuiz, double minimaTaller, double minimaParcial, double maximaTaller, double maximaQuiz, double maximaParcial) {
+    public int notasMaximasMinimas(double minimaQuiz, double minimaTaller, double minimaParcial, double maximaTaller, double maximaQuiz, double maximaParcial,Sheet sheet1,int rowNuw) {
+        int rowNum=rowNuw;
+        Row row = sheet1.createRow(rowNum++);
+        Cell cell = row.createCell(0);
+        cell.setCellValue("Notas Maximas y minimas");
+
         System.out.println("-----------------------Notas Maximas y minimas----------------------------------------");
+        row = sheet1.createRow(rowNum++);
+        cell = row.createCell(0);
+        cell.setCellValue("Notas mas altas:");
         System.out.println("Notas mas altas:");
+        row = sheet1.createRow(rowNum++);
+        cell = row.createCell(0);
+        cell.setCellValue("Parcial: " + maximaParcial);
         System.out.println("Parcial: " + maximaParcial);
+        row = sheet1.createRow(rowNum++);
+        cell = row.createCell(0);
+        cell.setCellValue("quiz: " + maximaQuiz);
         System.out.println("quiz: " + maximaQuiz);
+        row = sheet1.createRow(rowNum++);
+        cell = row.createCell(0);
+        cell.setCellValue("taller: " + maximaTaller );
         System.out.println("taller: " + maximaTaller + "\n");
+        row = sheet1.createRow(rowNum++);
+        cell = row.createCell(0);
+        cell.setCellValue("Notas mas bajas:");
         System.out.println("Notas mas bajas:");
+        row = sheet1.createRow(rowNum++);
+        cell = row.createCell(0);
+        cell.setCellValue("Parcial: " + minimaParcial);
         System.out.println("Parcial: " + minimaParcial);
+        row = sheet1.createRow(rowNum++);
+        cell = row.createCell(0);
+        cell.setCellValue("quiz: " + minimaQuiz);
         System.out.println("quiz: " + minimaQuiz);
+        row = sheet1.createRow(rowNum++);
+        cell = row.createCell(0);
+        cell.setCellValue("taller: " + minimaTaller);
         System.out.println("taller: " + minimaTaller+"\n\n");
+        return rowNum;
     }
 
     public static boolean isValidUsername(String name)
@@ -311,7 +411,7 @@ public class NotaDef {
         return m.matches();
     }
 
-    public void principal(int numeroEstudiantes, Estudiante arr[]){
+    public Sheet principal(int numeroEstudiantes, Estudiante arr[],Sheet sheet1){
         long inicio = System.nanoTime();
         long noCountTime=0;
         int numEstudiantes = numeroEstudiantes;
@@ -329,14 +429,12 @@ public class NotaDef {
             } while (numEstudiantes <= 0 || numEstudiantes > 1000);
 
         } else {
-            //for (int i=0;i< arr.length;i++){
-               // System.out.println("row: "+arr[i].getNombre()+"     Nota definitiva: "+arr[i].getNota()+ "          quiz1 "+arr[i].getNotaQuiz()+"  Parcial: "+arr[i].getNotaParcial()+ "   Taller: "+ arr[i].getNotaTaller());
-            //}
-              resultados(numeroEstudiantes,arr,true);
+              resultados(numeroEstudiantes,arr,true,sheet1);
         }
+        return sheet1;
     }
 
-    public void  resultados(int numeroEstudiantes,Estudiante arr[], boolean excel){
+    public Sheet resultados(int numeroEstudiantes,Estudiante arr[], boolean excel,Sheet sheet1){
         long inicio = System.nanoTime(),noCountTime=0;
         int numEstudiantes = numeroEstudiantes, numAprobados = 0, sumAprobados = 0, contador = 0;
         double minimaQuiz = 5, minimaTaller = 5, minimaParcial = 5, maximaTaller = 0, maximaQuiz = 0, maximaParcial = 0, sumDef = 0, varianza = 0, promedio = 0;
@@ -375,22 +473,35 @@ public class NotaDef {
             varianza = varianza + (num * num);
         }
         double desviacionEstandar = Math.sqrt(varianza / numEstudiantes);
-        resultadoGeneral(sumAprobados, numEstudiantes, sumDef, desviacionEstandar);
+        int rowNum=0;
+        Row row;
+        Cell cell;
+
         System.out.println("------------------------Lista estudiante con cinco--------------------------");
+        row = sheet1.createRow(rowNum++);
+        cell = row.createCell(0);
+        cell.setCellValue("Lista de estudiantes con cinco en definitiva:");
         System.out.println("Lista de estudiantes con cinco en definitiva: ");
         for (int i = 0; i < cinco.length; i++) {
             if (cinco[i] != null) {
+                row = sheet1.createRow(rowNum++);
+                cell = row.createCell(0);
+                cell.setCellValue(i + 1 + ". " + cinco[i]);
                 System.out.println(i + 1 + ". " + cinco[i]);
             }
         }
+
         System.out.println("\n");
-        notasMaximasMinimas(minimaQuiz, minimaTaller, minimaParcial, maximaTaller, maximaQuiz, maximaParcial);
-        Ordenar(arr, numEstudiantes);
+        rowNum=notasMaximasMinimas(minimaQuiz, minimaTaller, minimaParcial, maximaTaller, maximaQuiz, maximaParcial,sheet1,rowNum);
+        rowNum=resultadoGeneral(sumAprobados, numEstudiantes, sumDef, desviacionEstandar,sheet1,rowNum);
+        rowNum=Ordenar(arr, numEstudiantes,sheet1,rowNum);
         long fin = System.nanoTime();
         System.out.println("Duracion: " + ((fin-inicio)-noCountTime)/1e6 + " ms");
+        return sheet1;
     }
 
-    static void Ordenar(Estudiante arr[], int n) {
+    static int Ordenar(Estudiante arr[], int n,Sheet sheet1,int rowNun) {
+        int rowNum=rowNun;
         int i, j;
         double temp;
         String name;
@@ -418,17 +529,24 @@ public class NotaDef {
                 break;
         }
         System.out.println("---------------------Lista ordenada----------------------------------");
+        Row row = sheet1.createRow(rowNum++);
+        Cell cell = row.createCell(0);
+        cell.setCellValue("Lista ordenada por promedio de mayor a menor :");
         System.out.println("Lista ordenada por promedio de mayor a menor :");
         int count=0;
         for (int h = arr.length; h > 0; h--) {
             count+=1;
+            row = sheet1.createRow(rowNum++);
+            cell = row.createCell(0);
+            cell.setCellValue(count+". Nombre: " + arr[h-1].getNombre() + "   Nota: " + arr[h-1].getNota());
             System.out.println(count+". Nombre: " + arr[h-1].getNombre() + "   Nota: " + arr[h-1].getNota());
         }
         System.out.println("\n");
+        return rowNum;
     }
 }
 class Estudiante{
-    private String nombre;
+    private String nombre,estado;
     private double nota,notaQuiz,quiz1,quiz2,quiz3,notaTaller,taller1,taller2,notaParcial;
     public Estudiante(String nom, double notaParcial,double quiz1,double quiz2,double quiz3,double taller1,double taller2){
         this.nombre = nom;
@@ -441,6 +559,11 @@ class Estudiante{
         this.notaQuiz= (quiz1+quiz2+quiz3)/3;
         this.notaTaller =(taller1+taller2)/2;
         this.nota= (notaQuiz*0.3)+(notaParcial*0.5)+(notaTaller*0.2);
+        if (nota>=3 && nota<=5){
+            this.estado= "aprobado";
+        } else if (nota>=0 && nota<3) {
+            this.estado= "reprobado";
+        }
     }
     public double getNota(){
         return nota;
@@ -449,6 +572,8 @@ class Estudiante{
     public double getNotaQuiz(){return notaQuiz;}
     public double getNotaTaller(){return notaTaller;}
     public double getNotaParcial(){return notaParcial;}
+
+    public String getEstado(){return  estado;}
     public void setNombre(String name){
         this.nombre= name;
     }
